@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import numpy as np
+from torchviz import make_dot
 
 class Expert(nn.Module):
     def conv_block(self, in_chan, out_chan, kernel, step, pool):
@@ -69,7 +70,7 @@ class MSEMTL(nn.Module):
         # 多尺度卷积窗
         time_window = [0.5, 0.25, 0.125, 0.083]
         spat_window = [1,0.5,0.25]
-        # # 消冗实验
+        # # 消融实验
         # time_window = [0.5, 0.5, 0.5, 0.5]
         # spat_window = [1, 1, 1]
         # 专家集合
@@ -89,3 +90,11 @@ class MSEMTL(nn.Module):
         y_cog = self.task_specific_layers[1](fuse_feature)
         out_emo = torch.cat((y_emo.unsqueeze(0), y_cog.unsqueeze(0)), dim=0)
         return out_emo
+
+Model = MSEMTL((1, 28, 400), 5, 5, 200, 32, 0.5, 3, 2)
+nParams = sum([p.nelement() for p in Model.parameters()])
+print('* number of parameters: %d' % nParams)
+print(Model)
+input = torch.randn(16, 1, 28, 400)
+graph = make_dot(Model(input), params=dict(Model.named_parameters()))
+graph.render("MSEMTL", format='pdf', view=True)
